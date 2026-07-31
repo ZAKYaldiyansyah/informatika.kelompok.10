@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kahoot Style - Escape Room Kewirausahaan</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800&display=swap');
+
+        :root {
+            --kahoot-purple: #46178f;
+            --kahoot-light-purple: #864cbf;
+            --kahoot-red: #e21b3c;
+            --kahoot-blue: #1368ce;
+            --kahoot-yellow: #d89e00;
+            --kahoot-green: #26890c;
+            --kahoot-gray: #f2f2f2;
+            --correct-green: #66bf39;
+            --wrong-red: #ff3355;
+            --text-dark: #333333;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--kahoot-gray);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Layar Utama & Kontainer */
+        .screen {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+            transition: background-color 0.3s;
+            overflow-y: auto;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* --- Layar Intro / Lobby --- */
+        #screen-intro {
+            background-color: var(--kahoot-purple);
+            color: white;
+        }
+
+        .lobby-box {
+            background: white;
+            color: var(--text-dark);
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 500px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .lobby-box h1 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: var(--kahoot-purple);
+        }
+
+        .lobby-box p.story {
+            font-size: 1rem;
+            line-height: 1.5;
+            margin-bottom: 25px;
+            text-align: justify;
+        }
+
+        /* Styling Timer Selection */
+        .timer-selection {
+            margin-bottom: 25px;
+            background: var(--kahoot-gray);
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .timer-selection p {
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+            color: var(--text-dark);
+        }
+
+        .timer-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .timer-btn {
+            background-color: white;
+            border: 2px solid #ccc;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            color: var(--text-dark);
+            transition: 0.2s;
+            flex: 1;
+            min-width: 90px;
+        }
+
+        .timer-btn.active {
+            background-color: var(--kahoot-purple);
+            color: white;
+            border-color: var(--kahoot-purple);
+        }
+
+        button.start-btn {
+            background-color: var(--correct-green);
+            color: white;
+            font-size: 1.3rem;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 4px 0 #4a9325;
+            transition: 0.1s;
+        }
+
+        button.start-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #4a9325;
+        }
+
+        /* --- Layar Pertanyaan --- */
+        #top-bar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            font-weight: bold;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 10;
+        }
+
+        #timer-display {
+            background: var(--kahoot-purple);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 1.2rem;
+            display: none;
+            transition: background-color 0.3s;
+        }
+
+        .timer-warning {
+            background: var(--wrong-red) !important;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .question-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 600px;
+            margin-top: 60px;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--text-dark);
+        }
+
+        .level-badge {
+            display: inline-block;
+            background: var(--kahoot-purple);
+            color: white;
+            font-size: 0.8rem;
+            padding: 5px 10px;
+            border-radius: 20px;
+            margin-bottom: 10px;
+        }
+
+        /* Grid Pilihan Ganda */
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 10px;
+            width: 100%;
+            max-width: 800px;
+            flex-grow: 1;
+            padding-bottom: 20px;
+        }
+
+        .option-card {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+            transition: transform 0.1s, opacity 0.2s;
+            border: 4px solid transparent;
+        }
+
+        .option-card:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 rgba(0,0,0,0.2);
+        }
+
+        .option-card.correct {
+            border-color: white;
+            box-shadow: 0 0 0 3px var(--correct-green);
+        }
+
+        .option-card.wrong {
+            opacity: 0.45;
+        }
+
+        .shape-icon {
+            font-size: 1.5rem;
+            margin-right: 15px;
+        }
+
+        .bg-red { background-color: var(--kahoot-red); }
+        .bg-blue { background-color: var(--kahoot-blue); }
+        .bg-yellow { background-color: var(--kahoot-yellow); }
+        .bg-green { background-color: var(--kahoot-green); }
+
+        /* Input untuk soal Isian (Essay) */
+        .essay-container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--kahoot-blue);
+            padding: 30px;
+            border-radius: 8px;
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        input.kahoot-input {
+            padding: 15px;
+            font-size: 1.2rem;
+            border: 2px solid #ccc;
+            border-radius: 4px;
+            text-align: center;
+            font-weight: bold;
+            outline: none;
+        }
+
+        input.kahoot-input:focus {
+            border-color: var(--kahoot-purple);
+        }
+
+        button.kahoot-btn {
+            background-color: var(--text-dark);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        /* --- Layar Feedback (Benar / Salah / Habis Waktu) --- */
+        #screen-feedback {
+            color: white;
+            background-color: var(--kahoot-purple);
+        }
+
+        #screen-feedback h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        .points-box {
+            background: rgba(0,0,0,0.2);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+
+        .correct-answer-box {
+            background: white;
+            color: var(--text-dark);
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            display: none;
+        }
+
+        /* --- Layar Hasil Akhir --- */
+        #screen-end {
+            background-color: var(--kahoot-purple);
+            color: white;
+        }
+
+        .podium {
+            background: var(--kahoot-light-purple);
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .podium h2 { color: var(--kahoot-yellow); margin: 15px 0; font-size: 2rem; }
+
+        @media (max-width: 600px) {
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+            .question-container {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LAYAR 1: LOBBY / INTRO -->
+    <div id="screen-intro" class="screen active">
+        <div class="lobby-box">
+            <h1>Escape Room Kewirausahaan</h1>
+            <p class="story">«Sebuah perusahaan rintisan (startup) milik sekolah sedang mengalami krisis. Investor akan datang dalam waktu satu jam, tetapi seluruh rencana bisnis, strategi pemasaran, dan data keuangan terkunci. Kamu adalah anggota Tim Entrepreneur yang harus menyelesaikan berbagai tantangan kewirausahaan...»</p>
+
+            <!-- Fitur Pilih Timer -->
+            <div class="timer-selection">
+                <p>Pilih Batas Waktu <b>Per Soal</b>:</p>
+                <div class="timer-buttons">
+                    <button class="timer-btn active" onclick="selectTimer(0, this)">Tanpa Waktu</button>
+                    <button class="timer-btn" onclick="selectTimer(30, this)">30 Detik</button>
+                    <button class="timer-btn" onclick="selectTimer(60, this)">60 Detik</button>
+                </div>
+            </div>
+
+            <button class="start-btn" onclick="startPlay()">Mulai Permainan</button>
+        </div>
+    </div>
+
+    <!-- LAYAR 2: PERTANYAAN -->
+    <div id="screen-question" class="screen">
+        <div id="top-bar">
+            <span id="question-counter">Soal 1/25</span>
+            <span id="timer-display">⏳ 0s</span>
+            <span id="score-display">Skor: 0</span>
+        </div>
+
+        <div class="question-container">
+            <div class="level-badge" id="level-indicator">Level 1</div>
+            <div id="question-text">Memuat pertanyaan...</div>
+        </div>
+
+        <!-- Pilihan Ganda -->
+        <div class="options-grid" id="mcq-container">
+            <div class="option-card bg-red" onclick="submitAnswer('A')">
+                <div class="shape-icon">▲</div><span id="opt-A">Pilihan A</span>
+            </div>
+            <div class="option-card bg-blue" onclick="submitAnswer('B')">
+                <div class="shape-icon">◆</div><span id="opt-B">Pilihan B</span>
+            </div>
+            <div class="option-card bg-yellow" onclick="submitAnswer('C')">
+                <div class="shape-icon">●</div><span id="opt-C">Pilihan C</span>
+            </div>
+            <div class="option-card bg-green" onclick="submitAnswer('D')">
+                <div class="shape-icon">■</div><span id="opt-D">Pilihan D</span>
+            </div>
+        </div>
+
+        <!-- Isian (Essay) -->
+        <div class="essay-container" id="essay-container">
+            <input type="text" id="essay-input" class="kahoot-input" placeholder="Ketik jawabanmu..." autocomplete="off">
+            <button class="kahoot-btn" onclick="submitEssay()">Kirim Jawaban</button>
+        </div>
+    </div>
+
+    <!-- LAYAR 3: FEEDBACK -->
+    <div id="screen-feedback" class="screen">
+        <h1 id="feedback-title">Benar!</h1>
+        <div class="points-box" id="feedback-points">+100 Poin</div>
+        <div class="correct-answer-box" id="feedback-correct-answer">
+            Jawaban yang benar: <br><span id="correct-text"></span>
+        </div>
+    </div>
+
+    <!-- LAYAR 4: HASIL AKHIR -->
+    <div id="screen-end" class="screen">
+        <div class="podium">
+            <h1>MISI SELESAI!</h1>
+            <p>Sistem berhasil dipulihkan, investor terkesan!</p>
+            <h2 id="final-title">🏆 CEO Visioner</h2>
+            <p style="font-size: 1.2rem;">Total Skor: <b id="final-score">2500</b></p>
+        </div>
+    </div>
+
+    <script>
+        // Data Soal (25 Soal)
+        const questions = [
+            { level: "Level 1 – Ide Usaha", q: "Apa yang dimaksud dengan kewirausahaan?", options: { A: "Kegiatan membeli barang untuk dipakai sendiri", B: "Kemampuan menciptakan dan mengembangkan usaha", C: "Menabung uang di bank", D: "Bekerja di kantor" }, answer: "B" },
+            { level: "Level 1 – Ide Usaha", q: "Manakah yang termasuk peluang usaha?", options: { A: "Banyak sampah plastik di lingkungan", B: "Komputer rusak", C: "Jalan macet", D: "Cuaca panas" }, answer: "A" },
+            { level: "Level 1 – Ide Usaha", q: "Mengapa kreativitas penting dalam berwirausaha?", options: { A: "Agar usaha berbeda dari pesaing", B: "Agar cepat libur", C: "Agar tidak perlu promosi", D: "Agar harga selalu mahal" }, answer: "A" },
+            { level: "Level 1 – Ide Usaha", q: "Sikap utama seorang wirausahawan adalah....", options: { A: "Mudah menyerah", B: "Berani mengambil risiko", C: "Malas belajar", D: "Menunggu keberuntungan" }, answer: "B" },
+            { level: "Level 1 – Ide Usaha", q: "Yang bukan merupakan ciri seorang wirausahawan adalah....", options: { A: "Disiplin", B: "Percaya diri", C: "Pemalas", D: "Kreatif" }, answer: "C" },
+
+            { level: "Level 2 – Produk dan Produksi", q: "Produk yang mampu memenuhi kebutuhan pelanggan akan lebih....", options: { A: "Sulit terjual", B: "Mudah terjual", C: "Tidak dibutuhkan", D: "Tidak bernilai" }, answer: "B" },
+            { level: "Level 2 – Produk dan Produksi", q: "Kemasan produk berfungsi untuk....", options: { A: "Menambah berat produk", B: "Melindungi produk dan menarik perhatian pembeli", C: "Mengurangi kualitas produk", D: "Mempercepat kerusakan produk" }, answer: "B" },
+            { level: "Level 2 – Produk dan Produksi", q: "Jika modal sebesar Rp50.000 digunakan untuk membeli bahan baku dan hasil penjualan mencapai Rp80.000, berapakah laba yang diperoleh?", isEssay: true, answer: "30000", displayAnswer: "Rp30.000" },
+            { level: "Level 2 – Produk dan Produksi", q: "Yang termasuk biaya produksi adalah....", options: { A: "Bahan baku", B: "Liburan", C: "Bermain game", D: "Hadiah ulang tahun" }, answer: "A" },
+            { level: "Level 2 – Produk dan Produksi", q: "Apa tujuan menjaga kualitas produk?", options: { A: "Agar pelanggan puas", B: "Agar produk cepat rusak", C: "Agar harga turun", D: "Agar jumlah pembeli berkurang" }, answer: "A" },
+
+            { level: "Level 3 – Pemasaran", q: "Promosi bertujuan untuk....", options: { A: "Mengenalkan produk kepada pelanggan", B: "Mengurangi penjualan", C: "Menambah biaya", D: "Menghilangkan pelanggan" }, answer: "A" },
+            { level: "Level 3 – Pemasaran", q: "Media sosial yang dapat digunakan sebagai sarana promosi adalah....", options: { A: "Instagram", B: "Kalkulator", C: "Flashdisk", D: "Printer" }, answer: "A" },
+            { level: "Level 3 – Pemasaran", q: "Slogan yang baik sebaiknya....", options: { A: "Sulit diingat", B: "Singkat dan menarik", C: "Sangat panjang", D: "Membingungkan" }, answer: "B" },
+            { level: "Level 3 – Pemasaran", q: "Memberikan pelayanan yang ramah kepada pelanggan bertujuan untuk....", options: { A: "Membuat pelanggan kembali membeli", B: "Membuat pelanggan marah", C: "Mengurangi penjualan", D: "Menambah biaya" }, answer: "A" },
+            { level: "Level 3 – Pemasaran", q: "Diskon biasanya diberikan untuk....", options: { A: "Menarik minat pembeli", B: "Menurunkan kualitas produk", C: "Membuat produk cepat rusak", D: "Menambah biaya produksi" }, answer: "A" },
+
+            { level: "Level 4 – Keuangan", q: "Modal adalah....", options: { A: "Uang yang digunakan untuk memulai usaha", B: "Keuntungan usaha", C: "Pajak", D: "Bonus" }, answer: "A" },
+            { level: "Level 4 – Keuangan", q: "Jika jumlah pengeluaran lebih besar daripada pemasukan, maka usaha mengalami....", isEssay: true, answer: "rugi", displayAnswer: "Rugi" },
+            { level: "Level 4 – Keuangan", q: "Pencatatan keuangan dilakukan agar....", options: { A: "Keuangan usaha lebih teratur", B: "Mudah lupa", C: "Sulit menghitung keuntungan", D: "Tidak mengetahui kondisi usaha" }, answer: "A" },
+            { level: "Level 4 – Keuangan", q: "Yang termasuk aset usaha adalah....", options: { A: "Mesin produksi", B: "Sampah", C: "Batu di jalan", D: "Daun kering" }, answer: "A" },
+            { level: "Level 4 – Keuangan", q: "Keuntungan usaha sebaiknya....", options: { A: "Dikelola dengan baik", B: "Dihabiskan seluruhnya", C: "Dibuang", D: "Tidak dihitung" }, answer: "A" },
+
+            { level: "Level 5 – Studi Kasus", q: "Seorang pelanggan mengeluh karena produk yang diterimanya rusak. Apa tindakan yang paling tepat?", options: { A: "Meminta maaf dan memberikan solusi", B: "Mengabaikan pelanggan", C: "Menyalahkan pelanggan", D: "Memblokir pelanggan" }, answer: "A" },
+            { level: "Level 5 – Studi Kasus", q: "Penjualan menurun karena muncul banyak pesaing. Langkah terbaik adalah....", options: { A: "Berinovasi", B: "Menutup usaha", C: "Berhenti promosi", D: "Menunggu keadaan berubah" }, answer: "A" },
+            { level: "Level 5 – Studi Kasus", q: "Jika pelanggan meminta metode pembayaran digital, sebaiknya....", options: { A: "Menyediakan metode pembayaran digital", B: "Menolak semua pelanggan", C: "Menutup toko", D: "Menghapus produk" }, answer: "A" },
+            { level: "Level 5 – Studi Kasus", q: "Apa manfaat menerima kritik dari pelanggan?", options: { A: "Memperbaiki kualitas usaha", B: "Mengurangi jumlah pelanggan", C: "Menghentikan usaha", D: "Mengabaikan masukan" }, answer: "A" },
+            { level: "Level 5 – Studi Kasus", q: "Seorang wirausahawan yang sukses adalah orang yang....", options: { A: "Terus belajar, berinovasi, dan pantang menyerah", B: "Cepat menyerah", C: "Tidak mau berkembang", D: "Takut mencoba" }, answer: "A" }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+
+        // Sistem Timer & Pengunci State
+        let timeLimit = 0;
+        let timeLeft = 0;
+        let timerInterval;
+        let isAnswering = false;
+
+        function selectTimer(seconds, element) {
+            timeLimit = seconds;
+            document.querySelectorAll('.timer-btn').forEach(btn => btn.classList.remove('active'));
+            element.classList.add('active');
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function startPlay() {
+            currentQuestionIndex = 0;
+            score = 0;
+            showScreen('screen-question');
+            loadQuestion();
+        }
+
+        // Tekan Enter untuk essay
+        document.getElementById('essay-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') submitEssay();
+        });
+
+        function loadQuestion() {
+            clearInterval(timerInterval);
+            isAnswering = false;
+
+            if (currentQuestionIndex >= questions.length) {
+                endGame();
+                return;
+            }
+
+            const q = questions[currentQuestionIndex];
+
+            document.getElementById('question-counter').innerText = `Soal ${currentQuestionIndex + 1}/25`;
+            document.getElementById('score-display').innerText = `Skor: ${score}`;
+            document.getElementById('level-indicator').innerText = q.level;
+            document.getElementById('question-text').innerText = q.q;
+
+            const mcqContainer = document.getElementById('mcq-container');
+            const essayContainer = document.getElementById('essay-container');
+
+            // Reset tampilan kartu opsi
+            document.querySelectorAll('.option-card').forEach(card => {
+                card.classList.remove('correct', 'wrong');
+                card.style.pointerEvents = 'auto';
+            });
+
+            if (q.isEssay) {
+                mcqContainer.style.display = 'none';
+                essayContainer.style.display = 'flex';
+                const input = document.getElementById('essay-input');
+                input.value = '';
+                input.disabled = false;
+                setTimeout(() => input.focus(), 100);
+            } else {
+                mcqContainer.style.display = 'grid';
+                essayContainer.style.display = 'none';
+                ['A', 'B', 'C', 'D'].forEach(key => {
+                    document.getElementById('opt-' + key).innerText = q.options[key];
+                });
+            }
+
+            startTimer();
+        }
+
+        function startTimer() {
+            const timerDisplay = document.getElementById('timer-display');
+            if (timeLimit > 0) {
+                timeLeft = timeLimit;
+                timerDisplay.style.display = 'inline-block';
+                timerDisplay.classList.remove('timer-warning');
+                timerDisplay.innerText = `⏳ ${timeLeft}s`;
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    timerDisplay.innerText = `⏳ ${timeLeft}s`;
+                    if (timeLeft <= 5) timerDisplay.classList.add('timer-warning');
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        handleTimeout();
+                    }
+                }, 1000);
+            } else {
+                timerDisplay.style.display = 'none';
+            }
+        }
+
+        function handleTimeout() {
+            if (isAnswering) return;
+            isAnswering = true;
+            const q = questions[currentQuestionIndex];
+            const correctText = q.isEssay ? q.displayAnswer : q.options[q.answer];
+            document.querySelectorAll('.option-card').forEach(card => card.style.pointerEvents = 'none');
+            const input = document.getElementById('essay-input');
+            if (input) input.disabled = true;
+            showFeedback(false, correctText, 0, true);
+        }
+
+        function submitAnswer(choice) {
+            if (isAnswering) return;
+            isAnswering = true;
+            clearInterval(timerInterval);
+
+            const q = questions[currentQuestionIndex];
+            const correct = choice === q.answer;
+
+            document.querySelectorAll('.option-card').forEach(card => card.style.pointerEvents = 'none');
+            const clickedCard = document.getElementById('opt-' + choice).closest('.option-card');
+            clickedCard.classList.add(correct ? 'correct' : 'wrong');
+            if (!correct) {
+                document.getElementById('opt-' + q.answer).closest('.option-card').classList.add('correct');
+            }
+
+            const points = calcPoints(correct);
+            if (correct) score += points;
+
+            setTimeout(() => {
+                showFeedback(correct, q.options[q.answer], points, false);
+            }, 800);
+        }
+
+        function submitEssay() {
+            if (isAnswering) return;
+            isAnswering = true;
+            clearInterval(timerInterval);
+
+            const input = document.getElementById('essay-input');
+            input.disabled = true;
+
+            const q = questions[currentQuestionIndex];
+            const userAnswer = input.value.trim().toLowerCase();
+            const correct = userAnswer === q.answer.toLowerCase();
+
+            const points = calcPoints(correct);
+            if (correct) score += points;
+
+            showFeedback(correct, q.displayAnswer, points, false);
+        }
+
+        function calcPoints(correct) {
+            if (!correct) return 0;
+            if (timeLimit > 0) {
+                return 50 + Math.round(50 * Math.max(timeLeft, 0) / timeLimit);
+            }
+            return 100;
+        }
+
+        function showFeedback(correct, correctAnswerText, points, isTimeout) {
+            const feedbackScreen = document.getElementById('screen-feedback');
+            const title = document.getElementById('feedback-title');
+            const pointsBox = document.getElementById('feedback-points');
+            const correctBox = document.getElementById('feedback-correct-answer');
+            const correctText = document.getElementById('correct-text');
+
+            if (isTimeout) {
+                feedbackScreen.style.backgroundColor = 'var(--kahoot-purple)';
+                title.innerText = '⏰ Waktu Habis!';
+            } else if (correct) {
+                feedbackScreen.style.backgroundColor = 'var(--correct-green)';
+                title.innerText = '✅ Benar!';
+            } else {
+                feedbackScreen.style.backgroundColor = 'var(--wrong-red)';
+                title.innerText = '❌ Salah!';
+            }
+
+            pointsBox.innerText = correct ? `+${points} Poin` : '+0 Poin';
+
+            if (!correct) {
+                correctBox.style.display = 'block';
+                correctText.innerText = correctAnswerText;
+            } else {
+                correctBox.style.display = 'none';
+            }
+
+            document.getElementById('score-display').innerText = `Skor: ${score}`;
+            showScreen('screen-feedback');
+
+            setTimeout(() => {
+                currentQuestionIndex++;
+                showScreen('screen-question');
+                loadQuestion();
+            }, correct ? 1800 : 2500);
+        }
+
+        function endGame() {
+            document.getElementById('final-score').innerText = score;
+            const maxScore = questions.length * 100;
+            const percent = score / maxScore;
+            let title = '🌱 Pemula Wirausaha';
+            if (percent >= 0.8) title = '🏆 CEO Visioner';
+            else if (percent >= 0.6) title = '💼 Pengusaha Andal';
+            else if (percent >= 0.4) title = '📈 Wirausaha Berkembang';
+            document.getElementById('final-title').innerText = title;
+            showScreen('screen-end');
+        }
+    </script>
+</body>
+</html>
